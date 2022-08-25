@@ -1,5 +1,8 @@
 {
+  "type": "module",
   "dependencies": {
-    "fs": "^0.0.1-security"
+    "jsdom": "^20.0.0",
+    "node-fetch": "^3.2.10",
+    "readline-sync": "^1.4.10"
   }
 }
