@@ -33,13 +33,13 @@ export class FrequencyList {
     }
     
     swap(items, leftIndex, rightIndex){
-        var temp = items[leftIndex];
+        let temp = items[leftIndex];
         items[leftIndex] = items[rightIndex];
         items[rightIndex] = temp;
     }
 
     partition(items, left, right) {
-        var pivot   = items[Math.floor((right + left) / 2)].frequency, 
+        let pivot   = items[Math.floor((right + left) / 2)].frequency, 
             i       = left, 
             j       = right; 
         while (i <= j) {
@@ -59,7 +59,7 @@ export class FrequencyList {
     }
     
     quickSort(items, left, right) {
-        var index;
+        let index;
         if (items.length > 1) {
             index = this.partition(items, left, right); 
             if (left < index - 1) { 
