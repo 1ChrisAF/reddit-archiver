@@ -1,32 +1,39 @@
 import fetch from 'node-fetch';
 import jsdom from 'jsdom';
 import * as readLine from 'readline-sync';
+import { RawList } from './RawList.js';
+import { FrequencyList } from './FrequencyList.js';
 
-let url = '';
-let userChoice = '';
-let id = '';
-let invalidInput = true;
-let domList = [];
-let commentsIn = [];
-let commentFrequency = [];
-let postsIn = [];
-let postFrequency = [];
-let communities = [];
-let hasNext = true;
-
-const sleep = function(ms) {
-    let time = new Date().getTime();
-    while (time + ms >= new Date().getTime()) {
-
+const getURL = function() {
+    let url = '';
+    let userChoice = '';
+    let userName = '';
+    let invalidInput = true;
+    while (invalidInput) {
+        console.log('ACTIONS:\n=============\nQUIT: Enter \'q\'\nARCHIVE USER: \'u\'\n');
+        userChoice = readLine.question('CHOOSE: ');
+        if (userChoice.toLocaleLowerCase() === 'u') {
+            invalidInput = false;
+            userName = readLine.question('Enter username: ');
+            url = 'https://old.reddit.com/user/' + userName;
+        } else if (userChoice.toLocaleLowerCase() === 'q') {
+            console.log('Goodbye!')
+            invalidInput = false;
+            url = '';
+        } else {
+            console.log('Invalid input! Starting over...');
+        }
     }
+    return url;
 }
 
-const getArchive = async function() {
+const getArchive = async function(url, rawC, rawP) {
+    console.log('Traversing user history...\n')
     console.log(url);
+    let hasNext = true;
+    let tracker = 1;
     while (hasNext) {
-        // Define random wait value in milliseconds, between 1000ms
-        // and 3000ms
-        let randomWait = ((Math.random() * 3) + 1) * 1000;
+        tracker += 1;
         // Fetch HTML with URL; a string of all HTML
         // is returned and is parsed into a DOM object
         // with JSDOM.
@@ -38,15 +45,13 @@ const getArchive = async function() {
           let dom = new jsdom.JSDOM(html);
           return dom;
         });
-        // Push page to domList
-        domList.push(dom);
         let comments = dom.window.document.getElementsByClassName('thing comment');
         for (let element of Array.from(comments)) {
-            commentsIn.push(element.querySelector('.subreddit').innerHTML);
+            rawC.add(element.querySelector('.subreddit').innerHTML);
         }
         let posts = dom.window.document.getElementsByClassName('thing link');
         for (let element of Array.from(posts)) {
-            postsIn.push(element.querySelector('.subreddit').innerHTML);
+            rawP.add(element.querySelector('.subreddit').innerHTML);
         }
         // Automatically progress through each page returned by finding the 
         // next button, if it exists, and pulling the href value from the 
@@ -56,64 +61,38 @@ const getArchive = async function() {
         if (nextButton !== null) {
             url = nextButton.children.item(0).getAttribute('href');
             console.log(url);
-            // sleep(randomWait);
         } else {
             hasNext = false;
         }
     }
-    console.log(domList.length + ' pages of history parsed.');
+    console.log(tracker + ' pages of history parsed.');
+    return [rawC, rawP];
 }
 
-const createLists = function() {
+const createLists = function(rawC, rawP) {
     console.log('Creating lists...');
-    for (let community of commentsIn) {
-        if (!commentFrequency.some((sub) => sub.subreddit == community)) {
-            commentFrequency.push({subreddit: community, frequency: 1});
-            communities.push(community);
-            console.log('Adding ' + community + ' to comment frequency list with initial frequency of 1.');
-        } else {
-            commentFrequency[communities.indexOf(community)].frequency += 1;
-            console.log('Updating ' + community + ' frequency to ' + commentFrequency[communities.indexOf(community)].frequency);
-        }
-    }
-    communities = [];
-    for (let community of postsIn) {
-        if (!postFrequency.some((sub) => sub.subreddit == community)) {
-            postFrequency.push({subreddit: community, frequency: 1});
-            communities.push(community);
-            console.log('Adding ' + community + ' to post frequency list with initial frequency of 1.');
-        } else {
-            postFrequency[communities.indexOf(community)].frequency += 1;
-            console.log('Updating ' + community + ' frequency to ' + postFrequency[communities.indexOf(community)].frequency);
-        }
-    }
-    for (let entry of commentFrequency) {
-        console.log(entry);
-    }
-    for (let entry of postFrequency) {
-        console.log(entry);
-    }
+    let commentFrequencyList = rawC.toFrequencyList();
+    let postFrequencyList = rawP.toFrequencyList();
+    return [commentFrequencyList, postFrequencyList];
 }
 
-while (invalidInput) {
-    userChoice = readLine.question('Archive user (u) or subreddit (s), or quit (q)? Enter u or s or q: ');
-    if (userChoice.toLocaleLowerCase() === 'u') {
-        invalidInput = false;
-        id = readLine.question('Enter username: ');
-        url = 'https://old.reddit.com/user/' + id;
-        getArchive().then(() => {createLists();});
-    } else if (userChoice.toLocaleLowerCase() === 's') {
-        invalidInput = false;
-        id = readLine.question('Enter subreddit name: ');
-        url = 'https://old.reddit.com/r/' + id;
-        getArchive();
-        createLists();
-    } else if (userChoice.toLocaleLowerCase() === 'q') {
-        console.log('Goodbye!')
-        invalidInput = false;
-    } else {
-        console.log('Invalid input! Starting over...');
+const main = async function() {
+    let url = getURL();
+    let rawCommentList = new RawList();
+    let rawPostList = new RawList();
+    if (url != '') {
+        let results = await getArchive(url, rawCommentList, rawPostList);
+        let resultLists = createLists(results[0], results[1]);
+        let commentList = resultLists[0];
+        let postList = resultLists[1];
+        commentList.sortListByFrequency();
+        postList.sortListByFrequency();
+        console.log('COMMENTS:');
+        console.log(commentList.to_String());
+        console.log('POSTS:');
+        console.log(postList.to_String());
     }
+    
 }
 
-
+main();
