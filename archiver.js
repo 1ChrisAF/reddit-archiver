@@ -31,7 +31,7 @@ const getArchive = async function(url, rawC, rawP) {
     console.log('Traversing user history...\n')
     console.log(url);
     let hasNext = true;
-    let tracker = 1;
+    let tracker = 0;
     while (hasNext) {
         tracker += 1;
         // Fetch HTML with URL; a string of all HTML
@@ -47,11 +47,21 @@ const getArchive = async function(url, rawC, rawP) {
         });
         let comments = dom.window.document.getElementsByClassName('thing comment');
         for (let element of Array.from(comments)) {
-            rawC.add(element.querySelector('.subreddit').innerHTML);
+            let subtext = element.querySelector('.subreddit').innerHTML;
+            let time = element.querySelector('time').getAttribute('datetime');
+            let type = 'comment';
+            let link = 'https://reddit.com' + element.getAttribute('data-permalink');
+            let title = 'N/A';
+            rawC.add(subtext, type, time, link, title);
         }
         let posts = dom.window.document.getElementsByClassName('thing link');
         for (let element of Array.from(posts)) {
-            rawP.add(element.querySelector('.subreddit').innerHTML);
+            let subtext = element.querySelector('.subreddit').innerHTML;
+            let time = element.querySelector('time').getAttribute('datetime');
+            let type = 'post';
+            let link = 'https://reddit.com' + element.getAttribute('data-permalink');
+            let title = element.querySelector('a.title').innerHTML;
+            rawP.add(subtext, type, time, link, title);
         }
         // Automatically progress through each page returned by finding the 
         // next button, if it exists, and pulling the href value from the 
@@ -66,6 +76,8 @@ const getArchive = async function(url, rawC, rawP) {
         }
     }
     console.log(tracker + ' pages of history parsed.');
+    console.log(rawC.getRawItemsJSON());
+    console.log(rawP.getRawItemsJSON())
     return [rawC, rawP];
 }
 
