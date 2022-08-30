@@ -3,3 +3,4 @@ Properties/*
 obj/*
 appsettings.json
 appsettings.development.json
+bin/*
