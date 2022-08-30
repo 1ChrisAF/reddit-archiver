@@ -21,8 +21,8 @@ public class HomeController : Controller
     }
     [HttpPost]
     public IActionResult Index(string username) {
-        string info = main(username);
-        ViewBag.JSON = info;
+        List<FrequencyItem> info = userHistory(username);
+        ViewBag.info = info;
         return View();
     }
 
@@ -37,17 +37,34 @@ public class HomeController : Controller
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
-    private string main(string username) {
-        // string username = GetUsername();
-        /*
-        while (username == "") {
-            username = GetUsername();
-        }
-        */
+    private List<FrequencyItem> userHistory(string username) {
         List<Listing> listingList = parseThroughProfile(username);
         string listingJSON = JsonSerializer.Serialize(listingList);
-        return listingJSON;
+        List<FrequencyItem> frequencyList = getContributionCounts(listingList);
+        /*
+        string frequencyString = "";
+        foreach (FrequencyItem item in frequencyList) {
+            frequencyString += item.toString();
+        }
+        */
+        return frequencyList;
 
+    }
+    private List<FrequencyItem> getContributionCounts(List<Listing> listingList) {
+        List<FrequencyItem> frequencyList = new List<FrequencyItem>();
+        List<String> subreddits = new List<String>();
+        foreach (Listing listing in listingList) {
+            string currentSubreddit = listing.data_subreddit;
+            if (!subreddits.Contains(currentSubreddit)) {
+                subreddits.Add(currentSubreddit);
+                FrequencyItem newItem = new FrequencyItem(currentSubreddit);
+                frequencyList.Add(newItem);
+            } else {
+                frequencyList[subreddits.IndexOf(currentSubreddit)].timesContributed += 1;
+            }
+        }
+        List<FrequencyItem> sortedFrequencyListDescending = frequencyList.OrderByDescending(i => i.timesContributed).ToList();
+        return sortedFrequencyListDescending;
     }
     private List<Listing> parseThroughProfile(string username) {
         // List to be returned
@@ -82,7 +99,6 @@ public class HomeController : Controller
         // Return all Listing objs from parse
         return listingList;
     }
-
     private async Task<String> getProfileHTML(string url) {
         HttpClient client = new HttpClient();
         Console.WriteLine("Checking {0}...", url);
@@ -90,14 +106,12 @@ public class HomeController : Controller
         var pageContents = await response.Content.ReadAsStringAsync();
         return pageContents;
     }
-
     private MatchCollection getListings(string pageContents) {
         // Regex to pull all user comments and posts from profile page
         Regex regex = new Regex("(class=\"[^\"]*?thing[^\"]*?\")[\\s\\S]*?(class=\"child\")");
         MatchCollection listings = regex.Matches(pageContents);
         return listings;
     }
-
     private List<Listing> parseListings(MatchCollection listings) {
         string data_type;
         string data_subreddit;

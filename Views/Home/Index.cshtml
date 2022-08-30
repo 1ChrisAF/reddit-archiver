@@ -10,5 +10,13 @@
         <input type="text" id="username" name="username" placeholder="Username" />
         <input type="submit">
     </form>
-    <p>@ViewBag.JSON</p>
+    <ul>
+        @if (ViewBag.info != null) {
+            @foreach (FrequencyItem item in @ViewBag.info)
+            {
+                <li>@item.toString()</li>
+            }
+        }
+        
+    </ul>
 </div>
