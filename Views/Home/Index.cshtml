@@ -1,26 +1,5 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
-    List<FrequencyItem> getContributionCounts(List<Listing> listingList) {
-        List<FrequencyItem> frequencyList = new List<FrequencyItem>();
-        List<String> subreddits = new List<String>();
-        foreach (Listing listing in listingList) {
-            string currentSubreddit = listing.data_subreddit;
-            if (!subreddits.Contains(currentSubreddit)) {
-                subreddits.Add(currentSubreddit);
-                FrequencyItem newItem = new FrequencyItem(currentSubreddit);
-                frequencyList.Add(newItem);
-            } else {
-                frequencyList[subreddits.IndexOf(currentSubreddit)].timesContributed += 1;
-            }
-        }
-        List<FrequencyItem> sortedFrequencyListDescending = frequencyList.OrderByDescending(i => i.timesContributed).ToList();
-        return sortedFrequencyListDescending;
-    }
-    List<FrequencyItem> contributionCount = new List<FrequencyItem>();
-    if (ViewBag.info != null) {
-        contributionCount = getContributionCounts(ViewBag.info);
-    }
-    
+    ViewData["Title"] = "User History";
 }
 
 <div>
@@ -29,15 +8,4 @@
         <input type="text" id="username" name="username" placeholder="Username" />
         <input type="submit">
     </form>
-    <ul style="list-style: none">
-        @if (contributionCount.Count != 0) {
-            @foreach (FrequencyItem item in contributionCount)
-            {
-                <li>Subreddit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; @item.subreddit</li>
-                <li>Contributions: @item.timesContributed</li>
-                <br />
-            }
-        }
-        
-    </ul>
 </div>

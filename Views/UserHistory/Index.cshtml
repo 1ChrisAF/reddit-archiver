@@ -1,26 +1,8 @@
 @{
     ViewData["Title"] = "Home Page";
-    List<FrequencyItem> getContributionCounts(List<Listing> listingList) {
-        List<FrequencyItem> frequencyList = new List<FrequencyItem>();
-        List<String> subreddits = new List<String>();
-        foreach (Listing listing in listingList) {
-            string currentSubreddit = listing.data_subreddit;
-            if (!subreddits.Contains(currentSubreddit)) {
-                subreddits.Add(currentSubreddit);
-                FrequencyItem newItem = new FrequencyItem(currentSubreddit);
-                frequencyList.Add(newItem);
-            } else {
-                frequencyList[subreddits.IndexOf(currentSubreddit)].timesContributed += 1;
-            }
-        }
-        List<FrequencyItem> sortedFrequencyListDescending = frequencyList.OrderByDescending(i => i.timesContributed).ToList();
-        return sortedFrequencyListDescending;
-    }
-    List<FrequencyItem> contributionCount = new List<FrequencyItem>();
-    if (ViewBag.info != null) {
-        contributionCount = getContributionCounts(ViewBag.info);
-    }
-    
+    var sortedByTotalSum = ViewBag.info[0];
+    var sortedByRecency = ViewBag.info[1];
+    var totalSumBreakdown = ViewBag.info[2];
 }
 
 <div>
@@ -29,15 +11,52 @@
         <input type="text" id="username" name="username" placeholder="Username" />
         <input type="submit">
     </form>
-    <ul style="list-style: none">
-        @if (contributionCount.Count != 0) {
-            @foreach (FrequencyItem item in contributionCount)
-            {
-                <li>Subreddit:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; @item.subreddit</li>
-                <li>Contributions: @item.timesContributed</li>
-                <br />
-            }
+    <h3>Total Contributions by Subreddit</h3> 
+    <table style="border: 1px solid; margin: 5px">
+        <tr style="border: 1px solid;">
+            <th style="border: 1px solid; padding: 5px">Subreddit</th>
+            <th style="border: 1px solid; padding: 5px">Total Contributions</th>
+        </tr>
+        @foreach(var item in sortedByTotalSum) {
+        <tr style="border: 1px solid;">
+            <td style="border: 1px solid; padding: 5px"><a href="#@item.subreddit">@item.subreddit</a></td>
+            <td style="border: 1px solid; padding: 5px; text-align: center">@item.timesContributed</td>
+        </tr>
         }
-        
-    </ul>
+    </table>
+    <h3>Most Recent Contributions by Subreddit</h3>
+    <table style="border: 1px solid; margin: 5px">
+        <tr style="border: 1px solid;">
+            <th style="border: 1px solid; padding: 5px">Subreddit</th>
+            <th style="border: 1px solid; padding: 5px">Recently?</th>
+            <th style="border: 1px solid; padding: 5px">Date</th>
+            <th style="border: 1px solid; padding: 5px">Type</th>
+            <th style="border: 1px solid; padding: 5px">Permalink</th>
+        </tr>
+        @foreach(var item in sortedByRecency) {
+            string fullURL = "https://www.reddit.com"+item.permalink;
+        <tr style="border: 1px solid;">
+            <td style="border: 1px solid; padding: 5px" id="@item.subreddit">@item.subreddit</td>
+            <td style="border: 1px solid; padding: 5px">@item.recency</td>
+            <td style="border: 1px solid; padding: 5px;">@item.datetime</td>
+            <td style="border: 1px solid; padding: 5px; text-align: center">@item.type</td>
+            <td style="border: 1px solid; padding: 5px"><a href="@fullURL" target="_blank">@fullURL</a></td>
+        </tr>
+        }
+    </table>
+    <h3>Contributions by Subreddit by Type</h3>
+    <table style="border: 1px solid; margin: 5px">
+        <tr style="border: 1px solid;">
+            <th style="border: 1px solid; padding: 5px">Subreddit</th>
+            <th style="border: 1px solid; padding: 5px">Posts</th>
+            <th style="border: 1px solid; padding: 5px">Comments</th>
+        </tr>
+        @foreach(var item in totalSumBreakdown) {
+        <tr style="border: 1px solid;">
+            <td style="border: 1px solid; padding: 5px">@item.subreddit</td>
+            <td style="border: 1px solid; padding: 5px">@item.postCount</td>
+            <td style="border: 1px solid; padding: 5px">@item.commentCount</td>
+        </tr>   
+        }
+    </table>
 </div>

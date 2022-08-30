@@ -18,11 +18,16 @@ public class UserHistoryController : Controller {
     {
         return View();
     }
-
+    
     [HttpPost]
     public IActionResult Index(string username) {
         List<Listing> info = parseThroughProfile(username);
-        ViewBag.info = info;
+        List<List<FrequencyItem>> sortedInfo = new List<List<FrequencyItem>>();
+        sortedInfo.Add(getContributionCounts(info));
+        sortedInfo.Add(getContributionRecent(info));
+        sortedInfo.Add(getContributionTypes(info));
+        ViewBag.title = username;
+        ViewBag.info = sortedInfo;
         return View();
     }
 
@@ -32,7 +37,9 @@ public class UserHistoryController : Controller {
         return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 
-    /*** UTILITY METHODS ***/
+    /*** UTILITY METHODS FOR GETTING/SORTING USER HISTORY ***/
+
+    /*** RETRIEVE AND PARSE USER HISTORY ***/
 
     private List<Listing> parseThroughProfile(string username) {
         // List to be returned
@@ -93,6 +100,9 @@ public class UserHistoryController : Controller {
             // Regex for data_type
             regex = new Regex("(?<=data-type=\")\\S*(?=\")");
             data_type = regex.Match(listingValue).Value;
+            if(data_type == "link") {
+                data_type = "post";
+            }
             // Regex for data_subreddit
             regex = new Regex("(?<=data-subreddit=\")\\S*(?=\")");
             data_subreddit = regex.Match(listingValue).Value;
@@ -110,7 +120,6 @@ public class UserHistoryController : Controller {
         }
         return listingList;
     }
-
     private string getNextButtonLink(string pageContents) {
         string link = "";
         // Grab span tag with URL
@@ -122,5 +131,85 @@ public class UserHistoryController : Controller {
         link = regex.Match(link).Value;
         link = link.Replace("&amp;", "&");
         return link;
+    }
+
+    /*** SORT USER HISTORY ***/
+
+    // Return list of subreddits with related sums of user contributions of all types
+    List<FrequencyItem> getContributionCounts(List<Listing> listingList) {
+        List<FrequencyItem> frequencyList = new List<FrequencyItem>();
+        List<String> subreddits = new List<String>();
+        foreach (Listing listing in listingList) {
+            string currentSubreddit = listing.data_subreddit;
+            if (!subreddits.Contains(currentSubreddit)) {
+                subreddits.Add(currentSubreddit);
+                FrequencyItem newItem = new FrequencyItem(currentSubreddit);
+                frequencyList.Add(newItem);
+            } else {
+                frequencyList[subreddits.IndexOf(currentSubreddit)].timesContributed += 1;
+            }
+        }
+        List<FrequencyItem> sortedFrequencyListDescending = frequencyList.OrderByDescending(i => i.timesContributed).ToList();
+        return sortedFrequencyListDescending;
+    }
+    // Return list of subreddits sorted by user contribution recency
+    List<FrequencyItem> getContributionRecent(List<Listing> listingList) {
+        DateTime veryRecently = DateTime.Now.AddDays(-7);
+        DateTime recently = DateTime.Now.AddMonths(-1);
+        List<FrequencyItem> recentsList = new List<FrequencyItem>();
+        List<string> subreddits = new List<string>();
+        foreach (Listing listing in listingList) {
+            if (!subreddits.Contains(listing.data_subreddit)) {
+                subreddits.Add(listing.data_subreddit);
+                FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
+                newItem.datetime = listing.datetime;
+                newItem.permalink = listing.data_permalink;
+                if (newItem.datetime > veryRecently) {
+                    newItem.recency = "Very Recently";
+                } else if (newItem.datetime > recently) {
+                    newItem.recency = "Recently";
+                } else {
+                    newItem.recency = "Historically";
+                }
+                newItem.type = listing.data_type;
+                recentsList.Add(newItem);
+            } else {
+                if (recentsList[subreddits.IndexOf(listing.data_subreddit)].datetime < listing.datetime) {
+                    FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
+                    newItem.datetime = listing.datetime;
+                    newItem.permalink = listing.data_permalink;
+                    newItem.type = listing.data_type;
+                    recentsList[subreddits.IndexOf(listing.data_subreddit)] = newItem;
+                }
+            }
+        }
+        List<FrequencyItem> sortedRecentsListDescending = recentsList.OrderByDescending(i => i.datetime).ToList();
+        return sortedRecentsListDescending;
+    }
+    // Return list of subreddits with contribution sum broken down by type
+    List<FrequencyItem> getContributionTypes(List<Listing> listingList) {
+        List<FrequencyItem> typeList = new List<FrequencyItem>();
+        List<string> subreddits = new List<string>();
+        List<FrequencyItem> sortedTypeListAscending;
+        foreach (Listing listing in listingList) {
+            if (!subreddits.Contains(listing.data_subreddit)) {
+                subreddits.Add(listing.data_subreddit);
+                FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
+                if (listing.data_type == "post") {
+                    newItem.postCount += 1;
+                } else if (listing.data_type == "comment") {
+                    newItem.commentCount += 1;
+                }
+                typeList.Add(newItem);
+            } else {
+                if (listing.data_type == "post") {
+                    typeList[subreddits.IndexOf(listing.data_subreddit)].postCount += 1;
+                } else if (listing.data_type == "comment") {
+                    typeList[subreddits.IndexOf(listing.data_subreddit)].commentCount += 1;
+                }
+            }
+        }
+        sortedTypeListAscending = typeList.OrderBy(i => i.subreddit).ToList();
+        return sortedTypeListAscending;
     }
 }
