@@ -1,3 +1,5 @@
 .vscode/*
 Properties/*
 obj/*
+appsettings.json
+appsettings.development.json
