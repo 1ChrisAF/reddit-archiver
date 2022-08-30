@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "FpHqE5wnn2WC7S3BlakXF8q470v45W/X54JMRljCCNOL6vwq3ooS5Rw35+cE59O2H2eE94Dhxt9I+xIe3tGs2g==",
+  "dgSpecHash": "Zo0M2KOQE1caPeteWJWdCmUTGr+5DzbKKQT4DZKSiLdo7oGwowH4lu+tTm5q4G2xub73MVfIpx3xk+COMmN4Fg==",
   "success": true,
-  "projectFilePath": "C:\\Users\\chris\\Repos\\sandbox\\archiver-net\\archiver-net.csproj",
+  "projectFilePath": "C:\\Users\\chris\\Repos\\scripts\\reddit-archiver\\reddit-archiver.csproj",
   "expectedPackageFiles": [],
   "logs": []
 }

@@ -1,9 +1,0 @@
-{
-  "type": "module",
-  "dependencies": {
-    "jsdom": "^20.0.0",
-    "node-fetch": "^3.2.10",
-    "pkg": "^5.8.0",
-    "readline-sync": "^1.4.10"
-  }
-}

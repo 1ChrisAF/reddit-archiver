@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\chris\\repos\\scripts\\reddit-archiver\\reddit-archiver.csproj": {}
+    "C:\\Users\\chris\\Repos\\scripts\\reddit-archiver\\reddit-archiver.csproj": {}
   },
   "projects": {
-    "C:\\Users\\chris\\repos\\scripts\\reddit-archiver\\reddit-archiver.csproj": {
+    "C:\\Users\\chris\\Repos\\scripts\\reddit-archiver\\reddit-archiver.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\chris\\repos\\scripts\\reddit-archiver\\reddit-archiver.csproj",
+        "projectUniqueName": "C:\\Users\\chris\\Repos\\scripts\\reddit-archiver\\reddit-archiver.csproj",
         "projectName": "reddit-archiver",
-        "projectPath": "C:\\Users\\chris\\repos\\scripts\\reddit-archiver\\reddit-archiver.csproj",
+        "projectPath": "C:\\Users\\chris\\Repos\\scripts\\reddit-archiver\\reddit-archiver.csproj",
         "packagesPath": "C:\\Users\\chris\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\chris\\repos\\scripts\\reddit-archiver\\obj\\",
+        "outputPath": "C:\\Users\\chris\\Repos\\scripts\\reddit-archiver\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "C:\\Users\\chris\\AppData\\Roaming\\NuGet\\NuGet.Config",
@@ -50,6 +50,9 @@
           "assetTargetFallback": true,
           "warn": true,
           "frameworkReferences": {
+            "Microsoft.AspNetCore.App": {
+              "privateAssets": "none"
+            },
             "Microsoft.NETCore.App": {
               "privateAssets": "all"
             }
