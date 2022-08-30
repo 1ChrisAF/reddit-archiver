@@ -3,6 +3,7 @@
     var sortedByTotalSum = ViewBag.info[0];
     var sortedByRecency = ViewBag.info[1];
     var totalSumBreakdown = ViewBag.info[2];
+    var historiesBySubreddit = ViewBag.info[3];
 }
 
 <div>
@@ -32,6 +33,7 @@
             <th style="border: 1px solid; padding: 5px">Date</th>
             <th style="border: 1px solid; padding: 5px">Type</th>
             <th style="border: 1px solid; padding: 5px">Permalink</th>
+            <th></th>
         </tr>
         @foreach(var item in sortedByRecency) {
             string fullURL = "https://www.reddit.com"+item.permalink;
@@ -41,6 +43,7 @@
             <td style="border: 1px solid; padding: 5px;">@item.datetime</td>
             <td style="border: 1px solid; padding: 5px; text-align: center">@item.type</td>
             <td style="border: 1px solid; padding: 5px"><a href="@fullURL" target="_blank">@fullURL</a></td>
+            <td style="border: 1px solid; padding: 5px"><a href="SubredditHistory/GetHistory/@item.subreddit" target="_blank">Get Full History</a></td>
         </tr>
         }
     </table>

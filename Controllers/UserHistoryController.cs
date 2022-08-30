@@ -22,10 +22,13 @@ public class UserHistoryController : Controller {
     [HttpPost]
     public IActionResult Index(string username) {
         List<Listing> info = parseThroughProfile(username);
+        string infoJSON = JsonSerializer.Serialize(info);
+        TempData["fullInfo"] = infoJSON;
         List<List<FrequencyItem>> sortedInfo = new List<List<FrequencyItem>>();
         sortedInfo.Add(getContributionCounts(info));
         sortedInfo.Add(getContributionRecent(info));
         sortedInfo.Add(getContributionTypes(info));
+        sortedInfo.Add(getHistoryBySubreddit(info));
         ViewBag.title = username;
         ViewBag.info = sortedInfo;
         return View();
@@ -211,5 +214,20 @@ public class UserHistoryController : Controller {
         }
         sortedTypeListAscending = typeList.OrderBy(i => i.subreddit).ToList();
         return sortedTypeListAscending;
+    }
+    List<FrequencyItem> getHistoryBySubreddit(List<Listing> listingList) {
+        List<FrequencyItem> historiesBySubreddit = new List<FrequencyItem>();
+        List<string> subreddits = new List<string>();
+        foreach(Listing listing in listingList) {
+            if (!subreddits.Contains(listing.data_subreddit)) {
+                subreddits.Add(listing.data_subreddit);
+                FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
+                newItem.addListingToHistory(listing);
+                historiesBySubreddit.Add(newItem);
+            } else {
+                historiesBySubreddit[subreddits.IndexOf(listing.data_subreddit)].addListingToHistory(listing);
+            }
+        }
+        return historiesBySubreddit;
     }
 }
