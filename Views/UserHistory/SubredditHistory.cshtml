@@ -1,9 +1,19 @@
 @model Listing;
+@using System.Text.Json;
 @{
     List<Listing> history = ViewBag.history;
+    string username = history[0].data_author;
+    string subreddit = history[0].data_subreddit;
+    string subHistoryJSON = JsonSerializer.Serialize(history);
 }
 
 <style>
+    #headerContainer {
+        display: inline-flex;
+    }
+    #downloadButton {
+        padding: 5px;
+    }
     th {
         min-width: max-content;
     }
@@ -13,7 +23,6 @@
         border-bottom: 1px dotted black;
         cursor: pointer;
     }
-
     .toolTip .toolTipText {
         visibility: hidden;
         width: max-content;
@@ -45,7 +54,15 @@
     }
 </style>
 
-<h2>Full history for user <b>@history[0].data_author</b> in subreddit <b>@history[0].data_subreddit</b></h2>
+<div id="headerContainer">
+    <h2>Full history for user <b>@history[0].data_author</b> in subreddit <b>@history[0].data_subreddit</b></h2>
+    <form asp-controller="UserHistory" asp-action="DownloadJSONforSubreddit" method="get" id="downloadButton">
+        <input type="hidden" name="list" id="list" value="@subHistoryJSON" />
+        <input type="hidden" name="username" id="username" value="@username" />
+        <input type="hidden" name="subreddit" id="subreddit" value="@subreddit" />
+        <input type="submit" value="Download History JSON" />
+    </form>
+</div>
 <table style="border: 1px solid; margin: 5px">
     <tr style="border: 1px solid;">
         <th style="border: 1px solid; padding: 5px" class="sortableDate"><div class="toolTip">Date<span class="toolTipText">Sort By</span></div></th>

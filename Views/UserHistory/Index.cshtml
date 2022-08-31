@@ -4,10 +4,23 @@
     
     ViewData["Title"] = "User History";
     List<FrequencyItem> sortedHistory = ViewBag.info;
+    List<Listing> fullHistory = new List<Listing>();
+    foreach(FrequencyItem item in sortedHistory) {
+        foreach(Listing listing in item.getSubredditHistory()) {
+            fullHistory.Add(listing);
+        }
+    }
+    string userHistoryJSON = JsonSerializer.Serialize(fullHistory);
     // string historyJSON = JsonSerializer.Serialize(history);
 }
 
 <style>
+    #headerContainer {
+        display: inline-flex;
+    }
+    #downloadButton {
+        padding: 5px;
+    }
     .flexContainer {
         display: flex;
         flex-wrap: wrap;
@@ -56,7 +69,7 @@
 <h3></h3>
 
 <div>
-    <form asp-controller="UserHistory" asp-action="Index" method="post">
+    <form asp-controller="UserHistory" asp-action="Index" method="get">
         <label for="username">Enter Username</label>
         <input type="text" id="username" name="username" placeholder="Username" />
         <input type="submit">
@@ -68,7 +81,14 @@
             <a href="#@item.subreddit">@item.subreddit</a>
         }
     </div>
-    <h3>Most recent contributions by subreddit</h3>
+    <div id="headerContainer">
+        <h3>Most recent contributions by subreddit</h3>
+        <form asp-controller="UserHistory" asp-action="DownloadJSONforUser" method="get" id="downloadButton">
+            <input type="hidden" name="list" id="list" value="@userHistoryJSON" />
+            <input type="hidden" name="username" id="username" value="@ViewBag.username" />
+            <input type="submit" value="Download Full History JSON" />
+        </form>
+    </div>
     <table style="border: 1px solid; margin: 5px">
         <tr style="border: 1px solid;">
             <th style="border: 1px solid; padding: 5px" class="sortable"><div class="toolTip">Subreddit<span class="toolTipText">Sort By</span></div></th>
@@ -107,6 +127,8 @@
 </div>
 
 <script>
+    
+    
     const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
     const getCellValueDateTIme = (tr, idx) => Date.parse(tr.children[idx].innerText) || Date.parse(tr.children[idx].textContent)
 
@@ -130,4 +152,24 @@
             .sort(comparerDateTime(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
             .forEach(tr => table.appendChild(tr) );
     })));
+    /*
+    
+    */
+</script>
+<script>
+    function download(filename, textInput) {
+
+                  var element = document.createElement('a');
+                  element.setAttribute('href','data:application/json;charset=utf-8, ' + encodeURIComponent(textInput));
+                  element.setAttribute('download', filename);
+                  document.body.appendChild(element);
+                  element.click();
+                  //document.body.removeChild(element);
+            }
+            document.getElementById("downloadButton")
+                  .addEventListener("click", function () {
+                        var text = @userHistoryJSON;
+                        var filename = "output.txt";
+                        download(filename, text);
+                  }, false);
 </script>

@@ -33,7 +33,21 @@ public class UserHistoryController : Controller {
         ViewBag.history = info;
         return View();
     }
+    [HttpGet]
+    public IActionResult DownloadJSONforSubreddit(string list, string username, string subreddit) {
+        string fileName = username + "_IN_" + subreddit + ".json";
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(list);
+        var content = new System.IO.MemoryStream(bytes);
+        return File(content, "application/json", fileName);
+    }
+    [HttpGet]
+    public IActionResult DownloadJSONforUser(string list, string username) {
+        string fileName = username + ".json";
+        byte[] bytes = System.Text.Encoding.UTF8.GetBytes(list);
+        var content = new System.IO.MemoryStream(bytes);
+        return File(content, "application/json", fileName);
 
+    }
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
     public IActionResult Error()
     {
