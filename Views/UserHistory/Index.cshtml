@@ -8,6 +8,13 @@
 }
 
 <style>
+    .flexContainer {
+        display: flex;
+        flex-wrap: wrap;
+    }
+    .flexContainer a {
+        padding: 5px;
+    }
     th {
         min-width: max-content;
     }
@@ -17,7 +24,6 @@
         border-bottom: 1px dotted black;
         cursor: pointer;
     }
-
     .toolTip .toolTipText {
         visibility: hidden;
         width: max-content;
@@ -32,7 +38,6 @@
         left: 50%;
         margin-left: -30px;
     }
-
     .toolTip .toolTipText::after {
         content: "";
         position: absolute;
@@ -43,11 +48,12 @@
         border-style: solid;
         border-color: black transparent transparent transparent;
     }
-
     .toolTip:hover .toolTipText {
         visibility: visible;
     }
 </style>
+
+<h3></h3>
 
 <div>
     <form asp-controller="UserHistory" asp-action="Index" method="post">
@@ -56,6 +62,12 @@
         <input type="submit">
     </form>
     <h2>User: <b>@ViewBag.username</b></h2>
+    <h3>Subreddits:</h3>
+    <div class="flexContainer">
+        @foreach(FrequencyItem item in sortedHistory) {
+            <a href="#@item.subreddit">@item.subreddit</a>
+        }
+    </div>
     <h3>Most recent contributions by subreddit</h3>
     <table style="border: 1px solid; margin: 5px">
         <tr style="border: 1px solid;">
@@ -75,7 +87,7 @@
             List<Listing> relevantSubs = item.getSubredditHistory();
             string fullHistoryJSON = JsonSerializer.Serialize(relevantSubs);
             <tr style="border: 1px solid;">
-                <td style="border: 1px solid; padding: 5px">@item.subreddit</td>
+                <td style="border: 1px solid; padding: 5px" id="@item.subreddit">@item.subreddit</td>
                 <td style="border: 1px solid; padding: 5px">@total</td>
                 <td style="border: 1px solid; padding: 5px">@item.postCount</td>
                 <td style="border: 1px solid; padding: 5px">@item.commentCount</td>
