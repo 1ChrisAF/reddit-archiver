@@ -8,19 +8,44 @@
 }
 
 <style>
-    .buttonContainer {
-        display: flex;
-        padding: 2px;
-    }
-    .sortByAsc, .sortByDesc {
-        min-width: max-content;
-        padding: 5px;
-        margin: 1px;
-        font-size: .75rem;
-        display: inline-flex;
-    }
     th {
         min-width: max-content;
+    }
+    .toolTip {
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black;
+        cursor: pointer;
+    }
+
+    .toolTip .toolTipText {
+        visibility: hidden;
+        width: max-content;
+        background-color: black;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 2px 3px;
+        position: absolute;
+        z-index: 1;
+        bottom: 150%;
+        left: 50%;
+        margin-left: -30px;
+    }
+
+    .toolTip .toolTipText::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: black transparent transparent transparent;
+    }
+
+    .toolTip:hover .toolTipText {
+        visibility: visible;
     }
 </style>
 
@@ -34,46 +59,16 @@
     <h3>Most recent contributions by subreddit</h3>
     <table style="border: 1px solid; margin: 5px">
         <tr style="border: 1px solid;">
-            <th style="border: 1px solid; padding: 5px">Subreddit<br />
-            <div class="buttonContainer">
-                <button class="sortByAsc btn btn-secondary">Sort ASC</button>
-                <button class="sortByDesc btn btn-secondary">Sort DESC</button>
-            </div>
-            </th>
-            <th style="border: 1px solid; padding: 5px">Total&nbsp;Contributions<br />
-            <div class="buttonContainer">
-                <button class="sortByAsc btn btn-secondary">Sort ASC</button>
-                <button class="sortByDesc btn btn-secondary">Sort DESC</button>
-            </div>
-            </th>
-            <th style="border: 1px solid; padding: 5px">Posts<br />
-            <div class="buttonContainer">
-                <button class="sortByAsc btn btn-secondary">Sort ASC</button>
-                <button class="sortByDesc btn btn-secondary">Sort DESC</button>
-            </div>
-            </th>
-            <th style="border: 1px solid; padding: 5px">Comments<br />
-            <div class="buttonContainer">
-                <button class="sortByAsc btn btn-secondary">Sort ASC</button>
-                <button class="sortByDesc btn btn-secondary">Sort DESC</button>
-            </div>
-            </th>
+            <th style="border: 1px solid; padding: 5px" class="sortable"><div class="toolTip">Subreddit<span class="toolTipText">Sort By</span></div></th>
+            <th style="border: 1px solid; padding: 5px" class="sortable"><div class="toolTip">Total&nbsp;Contributions<span class="toolTipText">Sort By</span></div></th>
+            <th style="border: 1px solid; padding: 5px" class="sortable"><div class="toolTip">Posts<span class="toolTipText">Sort By</span></div></th>
+            <th style="border: 1px solid; padding: 5px" class="sortable"><div class="toolTip">Comments<span class="toolTipText">Sort By</span></div></th>
             <th style="border: 1px solid; padding: 5px">Recently?</th>
-            <th style="border: 1px solid; padding: 5px">Date<br />
-            <div class="buttonContainer">
-                <button class="sortByAsc btn btn-secondary">Sort ASC</button>
-                <button class="sortByDesc btn btn-secondary">Sort DESC</button>
-            </div>
-            </th>
-            <th style="border: 1px solid; padding: 5px">Type<br />
-            <div class="buttonContainer">
-                <button class="sortByAsc btn btn-secondary">Sort ASC</button>
-                <button class="sortByDesc btn btn-secondary">Sort DESC</button>
-            </div>
-            </th>
+            <th style="border: 1px solid; padding: 5px" class="sortableDate"><div class="toolTip">Date<span class="toolTipText">Sort By</span></div></th>
+            <th style="border: 1px solid; padding: 5px" class="sortable"><div class="toolTip">Type<span class="toolTipText">Sort By</span></div></th>
             <th style="border: 1px solid; padding: 5px">Permalink</th>
             <th style="border: 1px solid; padding: 5px"></th>
-        
+        </tr>
         @foreach(FrequencyItem item in sortedHistory) {
             int? total = item.postCount + item.commentCount;
             string fullURL = "https://www.reddit.com"+item.permalink;
@@ -98,3 +93,29 @@
         }
     </table>
 </div>
+
+<script>
+    const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+    const getCellValueDateTIme = (tr, idx) => Date.parse(tr.children[idx].innerText) || Date.parse(tr.children[idx].textContent)
+
+    const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
+        v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+        )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+    const comparerDateTime = (idx, asc) => (a, b) => ((v1, v2) => 
+        v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+        )(getCellValueDateTIme(asc ? a : b, idx), getCellValueDateTIme(asc ? b : a, idx));
+
+    // do the work...
+    document.querySelectorAll('.sortable').forEach(th => th.addEventListener('click', (() => {
+        const table = th.closest('table');
+        Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
+            .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+            .forEach(tr => table.appendChild(tr) );
+    })));
+    document.querySelectorAll('.sortableDate').forEach(th => th.addEventListener('click', (() => {
+        const table = th.closest('table');
+        Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
+            .sort(comparerDateTime(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+            .forEach(tr => table.appendChild(tr) );
+    })));
+</script>

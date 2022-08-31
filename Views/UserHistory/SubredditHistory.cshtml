@@ -2,11 +2,54 @@
 @{
     List<Listing> history = ViewBag.history;
 }
+
+<style>
+    th {
+        min-width: max-content;
+    }
+    .toolTip {
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black;
+        cursor: pointer;
+    }
+
+    .toolTip .toolTipText {
+        visibility: hidden;
+        width: max-content;
+        background-color: black;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 2px 3px;
+        position: absolute;
+        z-index: 1;
+        bottom: 150%;
+        left: 50%;
+        margin-left: -30px;
+    }
+
+    .toolTip .toolTipText::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: black transparent transparent transparent;
+    }
+
+    .toolTip:hover .toolTipText {
+        visibility: visible;
+    }
+</style>
+
 <h2>Full history for user <b>@history[0].data_author</b> in subreddit <b>@history[0].data_subreddit</b></h2>
 <table style="border: 1px solid; margin: 5px">
     <tr style="border: 1px solid;">
-        <th style="border: 1px solid; padding: 5px">Date</th>
-        <th style="border: 1px solid; padding: 5px">Type</th>
+        <th style="border: 1px solid; padding: 5px" class="sortableDate"><div class="toolTip">Date<span class="toolTipText">Sort By</span></div></th>
+        <th style="border: 1px solid; padding: 5px"class="sortable"><div class="toolTip">Type<span class="toolTipText">Sort By</span></div></th>
         <th style="border: 1px solid; padding: 5px">Permalink</th>
     </tr>
     @foreach(Listing item in history) {
@@ -18,3 +61,29 @@
     </tr>
     }
 </table>
+
+<script>
+    const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
+    const getCellValueDateTIme = (tr, idx) => Date.parse(tr.children[idx].innerText) || Date.parse(tr.children[idx].textContent)
+
+    const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
+        v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+        )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
+    const comparerDateTime = (idx, asc) => (a, b) => ((v1, v2) => 
+        v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
+        )(getCellValueDateTIme(asc ? a : b, idx), getCellValueDateTIme(asc ? b : a, idx));
+
+    // do the work...
+    document.querySelectorAll('.sortable').forEach(th => th.addEventListener('click', (() => {
+        const table = th.closest('table');
+        Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
+            .sort(comparer(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+            .forEach(tr => table.appendChild(tr) );
+    })));
+    document.querySelectorAll('.sortableDate').forEach(th => th.addEventListener('click', (() => {
+        const table = th.closest('table');
+        Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
+            .sort(comparerDateTime(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
+            .forEach(tr => table.appendChild(tr) );
+    })));
+</script>
