@@ -7,6 +7,7 @@ using System.Text.Json;
 namespace archiver_net.Controllers;
 
 public class UserHistoryController : Controller {
+    private List<Listing> userList = new List<Listing>();
     private readonly ILogger<HomeController> _logger;
 
     public UserHistoryController(ILogger<HomeController> logger)
@@ -22,16 +23,38 @@ public class UserHistoryController : Controller {
     [HttpPost]
     public IActionResult Index(string username) {
         List<Listing> info = parseThroughProfile(username);
-        string infoJSON = JsonSerializer.Serialize(info);
-        TempData["fullInfo"] = infoJSON;
+        foreach(Listing item in info) {
+            this.userList.Add(item);
+        }
         List<List<FrequencyItem>> sortedInfo = new List<List<FrequencyItem>>();
         sortedInfo.Add(getContributionCounts(info));
         sortedInfo.Add(getContributionRecent(info));
         sortedInfo.Add(getContributionTypes(info));
         sortedInfo.Add(getHistoryBySubreddit(info));
+        sortedInfo.Add(getSortedUserHistory(info));
+        ViewData["history"] = info;
         ViewBag.title = username;
         ViewBag.info = sortedInfo;
         return View();
+    }
+    [HttpPost]
+    public IActionResult SubredditHistory(string list) {
+        var info = list;
+        // List<Listing> relevantHistory = userList.FindAll(i => i.data_subreddit == id);
+        
+        //ViewBag.history = relevantHistory;
+        if (info != null) {
+            string returnString ="\n";
+            if (info.Length != 0) {
+                returnString += info;
+            } else {
+                returnString += "List was empty";
+            }
+            return Content(returnString);
+        } else {
+            return Content(" Info didn't work ");
+        }
+        
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -51,7 +74,7 @@ public class UserHistoryController : Controller {
         List<Listing> newListings = new List<Listing>();
         // For url of page of user profile, initially just username
         string url = "https://old.reddit.com/user/" + username;
-        Task<String> htmlTask;
+        Task<string> htmlTask;
         string pageContents;
         MatchCollection listings;
         do {
@@ -229,5 +252,57 @@ public class UserHistoryController : Controller {
             }
         }
         return historiesBySubreddit;
+    }
+    // I'm sorry.
+    List<FrequencyItem> getSortedUserHistory(List<Listing> listingList) {
+        List<FrequencyItem> frequencyList = new List<FrequencyItem>();
+        List<string> subreddits = new List<string>();
+        foreach(Listing listing in listingList) {
+            if (!subreddits.Contains(listing.data_subreddit)) {
+                subreddits.Add(listing.data_subreddit);
+                FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
+                newItem.addListingToHistory(listing);
+                frequencyList.Add(newItem);
+                if (listing.data_type == "link") {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].postCount += 1;
+                } else {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].commentCount += 1;
+                }
+                frequencyList[subreddits.IndexOf(listing.data_subreddit)].datetime = listing.datetime;
+                DateTime veryRecently = DateTime.Now.AddDays(-7);
+                DateTime recently = DateTime.Now.AddMonths(-1);
+                if (listing.datetime > veryRecently) {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].recency = "Very Recently";
+                } else if (listing.datetime > recently) {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].recency = "Recently";
+                } else {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].recency = "Historically";
+                }
+                frequencyList[subreddits.IndexOf(listing.data_subreddit)].type = listing.data_type;
+                frequencyList[subreddits.IndexOf(listing.data_subreddit)].permalink = listing.data_permalink;
+            } else {
+                frequencyList[subreddits.IndexOf(listing.data_subreddit)].addListingToHistory(listing);
+                if (listing.data_type == "link") {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].postCount += 1;
+                } else {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].commentCount += 1;
+                }
+                if (frequencyList[subreddits.IndexOf(listing.data_subreddit)].datetime < listing.datetime) {
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].datetime = listing.datetime;
+                    DateTime veryRecently = DateTime.Now.AddDays(-7);
+                    DateTime recently = DateTime.Now.AddMonths(-1);
+                    if (listing.datetime > veryRecently) {
+                        frequencyList[subreddits.IndexOf(listing.data_subreddit)].recency = "Very Recently";
+                    } else if (listing.datetime > recently) {
+                        frequencyList[subreddits.IndexOf(listing.data_subreddit)].recency = "Recently";
+                    } else {
+                        frequencyList[subreddits.IndexOf(listing.data_subreddit)].recency = "Historically";
+                    }
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].type = listing.data_type;
+                    frequencyList[subreddits.IndexOf(listing.data_subreddit)].permalink = listing.data_permalink;
+                }
+            }
+        }
+        return frequencyList;
     }
 }

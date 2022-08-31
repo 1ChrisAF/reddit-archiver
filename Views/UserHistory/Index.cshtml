@@ -1,9 +1,16 @@
+@model Listing;
+@using System.Text.Json;
 @{
-    ViewData["Title"] = "Home Page";
+    
+    ViewData["Title"] = "User History";
+    ViewData["Test"] = "test";
+    List<Listing> history = ViewData["history"] as List<Listing>;
     var sortedByTotalSum = ViewBag.info[0];
     var sortedByRecency = ViewBag.info[1];
     var totalSumBreakdown = ViewBag.info[2];
     var historiesBySubreddit = ViewBag.info[3];
+    var sortedHistory = ViewBag.info[4];
+    // string historyJSON = JsonSerializer.Serialize(history);
 }
 
 <div>
@@ -12,6 +19,7 @@
         <input type="text" id="username" name="username" placeholder="Username" />
         <input type="submit">
     </form>
+    <h2>User: @ViewBag.title</h2>
     <h3>Total Contributions by Subreddit</h3> 
     <table style="border: 1px solid; margin: 5px">
         <tr style="border: 1px solid;">
@@ -36,6 +44,8 @@
             <th></th>
         </tr>
         @foreach(var item in sortedByRecency) {
+            List<Listing> relevantSubs = history.FindAll(i => i.data_subreddit == item.subreddit);
+            string historyJSON = JsonSerializer.Serialize(relevantSubs);
             string fullURL = "https://www.reddit.com"+item.permalink;
         <tr style="border: 1px solid;">
             <td style="border: 1px solid; padding: 5px" id="@item.subreddit">@item.subreddit</td>
@@ -43,7 +53,12 @@
             <td style="border: 1px solid; padding: 5px;">@item.datetime</td>
             <td style="border: 1px solid; padding: 5px; text-align: center">@item.type</td>
             <td style="border: 1px solid; padding: 5px"><a href="@fullURL" target="_blank">@fullURL</a></td>
-            <td style="border: 1px solid; padding: 5px"><a href="SubredditHistory/GetHistory/@item.subreddit" target="_blank">Get Full History</a></td>
+            <td style="border: 1px solid; padding: 5px">
+                <form asp-controller="UserHistory" asp-action="SubredditHistory" target="_blank" method="post">
+                    <input type="hidden" name="list" id="list" value="@historyJSON" />
+                    <input type="submit" value="Get Full History" />
+                </form>
+            </td>
         </tr>
         }
     </table>
