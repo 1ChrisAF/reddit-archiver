@@ -3,13 +3,7 @@
 @{
     
     ViewData["Title"] = "User History";
-    ViewData["Test"] = "test";
-    List<Listing> history = ViewData["history"] as List<Listing>;
-    var sortedByTotalSum = ViewBag.info[0];
-    var sortedByRecency = ViewBag.info[1];
-    var totalSumBreakdown = ViewBag.info[2];
-    var historiesBySubreddit = ViewBag.info[3];
-    var sortedHistory = ViewBag.info[4];
+    List<FrequencyItem> sortedHistory = ViewBag.info;
     // string historyJSON = JsonSerializer.Serialize(history);
 }
 
@@ -19,62 +13,41 @@
         <input type="text" id="username" name="username" placeholder="Username" />
         <input type="submit">
     </form>
-    <h2>User: @ViewBag.title</h2>
-    <h3>Total Contributions by Subreddit</h3> 
+    <h2>User: <b>@ViewBag.username</b></h2>
+    <h3>Most recent contributions by subreddit</h3>
     <table style="border: 1px solid; margin: 5px">
         <tr style="border: 1px solid;">
             <th style="border: 1px solid; padding: 5px">Subreddit</th>
             <th style="border: 1px solid; padding: 5px">Total Contributions</th>
-        </tr>
-        @foreach(var item in sortedByTotalSum) {
-        <tr style="border: 1px solid;">
-            <td style="border: 1px solid; padding: 5px"><a href="#@item.subreddit">@item.subreddit</a></td>
-            <td style="border: 1px solid; padding: 5px; text-align: center">@item.timesContributed</td>
-        </tr>
-        }
-    </table>
-    <h3>Most Recent Contributions by Subreddit</h3>
-    <table style="border: 1px solid; margin: 5px">
-        <tr style="border: 1px solid;">
-            <th style="border: 1px solid; padding: 5px">Subreddit</th>
+            <th style="border: 1px solid; padding: 5px">Posts</th>
+            <th style="border: 1px solid; padding: 5px">Comments</th>
             <th style="border: 1px solid; padding: 5px">Recently?</th>
             <th style="border: 1px solid; padding: 5px">Date</th>
             <th style="border: 1px solid; padding: 5px">Type</th>
             <th style="border: 1px solid; padding: 5px">Permalink</th>
-            <th></th>
-        </tr>
-        @foreach(var item in sortedByRecency) {
-            List<Listing> relevantSubs = history.FindAll(i => i.data_subreddit == item.subreddit);
-            string historyJSON = JsonSerializer.Serialize(relevantSubs);
+            <th style="border: 1px solid; padding: 5px"></th>
+        
+        @foreach(FrequencyItem item in sortedHistory) {
+            int? total = item.postCount + item.commentCount;
             string fullURL = "https://www.reddit.com"+item.permalink;
-        <tr style="border: 1px solid;">
-            <td style="border: 1px solid; padding: 5px" id="@item.subreddit">@item.subreddit</td>
-            <td style="border: 1px solid; padding: 5px">@item.recency</td>
-            <td style="border: 1px solid; padding: 5px;">@item.datetime</td>
-            <td style="border: 1px solid; padding: 5px; text-align: center">@item.type</td>
-            <td style="border: 1px solid; padding: 5px"><a href="@fullURL" target="_blank">@fullURL</a></td>
-            <td style="border: 1px solid; padding: 5px">
-                <form asp-controller="UserHistory" asp-action="SubredditHistory" target="_blank" method="post">
-                    <input type="hidden" name="list" id="list" value="@historyJSON" />
-                    <input type="submit" value="Get Full History" />
-                </form>
-            </td>
-        </tr>
-        }
-    </table>
-    <h3>Contributions by Subreddit by Type</h3>
-    <table style="border: 1px solid; margin: 5px">
-        <tr style="border: 1px solid;">
-            <th style="border: 1px solid; padding: 5px">Subreddit</th>
-            <th style="border: 1px solid; padding: 5px">Posts</th>
-            <th style="border: 1px solid; padding: 5px">Comments</th>
-        </tr>
-        @foreach(var item in totalSumBreakdown) {
-        <tr style="border: 1px solid;">
-            <td style="border: 1px solid; padding: 5px">@item.subreddit</td>
-            <td style="border: 1px solid; padding: 5px">@item.postCount</td>
-            <td style="border: 1px solid; padding: 5px">@item.commentCount</td>
-        </tr>   
+            List<Listing> relevantSubs = item.getSubredditHistory();
+            string fullHistoryJSON = JsonSerializer.Serialize(relevantSubs);
+            <tr style="border: 1px solid;">
+                <td style="border: 1px solid; padding: 5px">@item.subreddit</td>
+                <td style="border: 1px solid; padding: 5px">@total</td>
+                <td style="border: 1px solid; padding: 5px">@item.postCount</td>
+                <td style="border: 1px solid; padding: 5px">@item.commentCount</td>
+                <td style="border: 1px solid; padding: 5px">@item.recency</td>
+                <td style="border: 1px solid; padding: 5px">@item.datetime</td>
+                <td style="border: 1px solid; padding: 5px">@item.type</td>
+                <td style="border: 1px solid; padding: 5px"><a href="@fullURL" target="_blank">@fullURL</a></td>
+                <td style="border: 1px solid; padding: 5px">
+                    <form asp-controller="UserHistory" asp-action="SubredditHistory" target="_blank" method="post">
+                        <input type="hidden" name="list" id="list" value="@fullHistoryJSON" />
+                        <input type="submit" value="Get Full History" />
+                    </form>
+                </td>
+            </tr>
         }
     </table>
 </div>

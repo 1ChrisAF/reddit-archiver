@@ -23,38 +23,15 @@ public class UserHistoryController : Controller {
     [HttpPost]
     public IActionResult Index(string username) {
         List<Listing> info = parseThroughProfile(username);
-        foreach(Listing item in info) {
-            this.userList.Add(item);
-        }
-        List<List<FrequencyItem>> sortedInfo = new List<List<FrequencyItem>>();
-        sortedInfo.Add(getContributionCounts(info));
-        sortedInfo.Add(getContributionRecent(info));
-        sortedInfo.Add(getContributionTypes(info));
-        sortedInfo.Add(getHistoryBySubreddit(info));
-        sortedInfo.Add(getSortedUserHistory(info));
-        ViewData["history"] = info;
-        ViewBag.title = username;
-        ViewBag.info = sortedInfo;
+        ViewBag.info = getSortedUserHistory(info);
+        ViewBag.username = username;
         return View();
     }
     [HttpPost]
     public IActionResult SubredditHistory(string list) {
-        var info = list;
-        // List<Listing> relevantHistory = userList.FindAll(i => i.data_subreddit == id);
-        
-        //ViewBag.history = relevantHistory;
-        if (info != null) {
-            string returnString ="\n";
-            if (info.Length != 0) {
-                returnString += info;
-            } else {
-                returnString += "List was empty";
-            }
-            return Content(returnString);
-        } else {
-            return Content(" Info didn't work ");
-        }
-        
+        List<Listing> info = JsonSerializer.Deserialize<List<Listing>>(list);
+        ViewBag.history = info;
+        return View();
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
@@ -161,98 +138,6 @@ public class UserHistoryController : Controller {
 
     /*** SORT USER HISTORY ***/
 
-    // Return list of subreddits with related sums of user contributions of all types
-    List<FrequencyItem> getContributionCounts(List<Listing> listingList) {
-        List<FrequencyItem> frequencyList = new List<FrequencyItem>();
-        List<String> subreddits = new List<String>();
-        foreach (Listing listing in listingList) {
-            string currentSubreddit = listing.data_subreddit;
-            if (!subreddits.Contains(currentSubreddit)) {
-                subreddits.Add(currentSubreddit);
-                FrequencyItem newItem = new FrequencyItem(currentSubreddit);
-                frequencyList.Add(newItem);
-            } else {
-                frequencyList[subreddits.IndexOf(currentSubreddit)].timesContributed += 1;
-            }
-        }
-        List<FrequencyItem> sortedFrequencyListDescending = frequencyList.OrderByDescending(i => i.timesContributed).ToList();
-        return sortedFrequencyListDescending;
-    }
-    // Return list of subreddits sorted by user contribution recency
-    List<FrequencyItem> getContributionRecent(List<Listing> listingList) {
-        DateTime veryRecently = DateTime.Now.AddDays(-7);
-        DateTime recently = DateTime.Now.AddMonths(-1);
-        List<FrequencyItem> recentsList = new List<FrequencyItem>();
-        List<string> subreddits = new List<string>();
-        foreach (Listing listing in listingList) {
-            if (!subreddits.Contains(listing.data_subreddit)) {
-                subreddits.Add(listing.data_subreddit);
-                FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
-                newItem.datetime = listing.datetime;
-                newItem.permalink = listing.data_permalink;
-                if (newItem.datetime > veryRecently) {
-                    newItem.recency = "Very Recently";
-                } else if (newItem.datetime > recently) {
-                    newItem.recency = "Recently";
-                } else {
-                    newItem.recency = "Historically";
-                }
-                newItem.type = listing.data_type;
-                recentsList.Add(newItem);
-            } else {
-                if (recentsList[subreddits.IndexOf(listing.data_subreddit)].datetime < listing.datetime) {
-                    FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
-                    newItem.datetime = listing.datetime;
-                    newItem.permalink = listing.data_permalink;
-                    newItem.type = listing.data_type;
-                    recentsList[subreddits.IndexOf(listing.data_subreddit)] = newItem;
-                }
-            }
-        }
-        List<FrequencyItem> sortedRecentsListDescending = recentsList.OrderByDescending(i => i.datetime).ToList();
-        return sortedRecentsListDescending;
-    }
-    // Return list of subreddits with contribution sum broken down by type
-    List<FrequencyItem> getContributionTypes(List<Listing> listingList) {
-        List<FrequencyItem> typeList = new List<FrequencyItem>();
-        List<string> subreddits = new List<string>();
-        List<FrequencyItem> sortedTypeListAscending;
-        foreach (Listing listing in listingList) {
-            if (!subreddits.Contains(listing.data_subreddit)) {
-                subreddits.Add(listing.data_subreddit);
-                FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
-                if (listing.data_type == "post") {
-                    newItem.postCount += 1;
-                } else if (listing.data_type == "comment") {
-                    newItem.commentCount += 1;
-                }
-                typeList.Add(newItem);
-            } else {
-                if (listing.data_type == "post") {
-                    typeList[subreddits.IndexOf(listing.data_subreddit)].postCount += 1;
-                } else if (listing.data_type == "comment") {
-                    typeList[subreddits.IndexOf(listing.data_subreddit)].commentCount += 1;
-                }
-            }
-        }
-        sortedTypeListAscending = typeList.OrderBy(i => i.subreddit).ToList();
-        return sortedTypeListAscending;
-    }
-    List<FrequencyItem> getHistoryBySubreddit(List<Listing> listingList) {
-        List<FrequencyItem> historiesBySubreddit = new List<FrequencyItem>();
-        List<string> subreddits = new List<string>();
-        foreach(Listing listing in listingList) {
-            if (!subreddits.Contains(listing.data_subreddit)) {
-                subreddits.Add(listing.data_subreddit);
-                FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
-                newItem.addListingToHistory(listing);
-                historiesBySubreddit.Add(newItem);
-            } else {
-                historiesBySubreddit[subreddits.IndexOf(listing.data_subreddit)].addListingToHistory(listing);
-            }
-        }
-        return historiesBySubreddit;
-    }
     // I'm sorry.
     List<FrequencyItem> getSortedUserHistory(List<Listing> listingList) {
         List<FrequencyItem> frequencyList = new List<FrequencyItem>();
@@ -263,7 +148,7 @@ public class UserHistoryController : Controller {
                 FrequencyItem newItem = new FrequencyItem(listing.data_subreddit);
                 newItem.addListingToHistory(listing);
                 frequencyList.Add(newItem);
-                if (listing.data_type == "link") {
+                if (listing.data_type == "post") {
                     frequencyList[subreddits.IndexOf(listing.data_subreddit)].postCount += 1;
                 } else {
                     frequencyList[subreddits.IndexOf(listing.data_subreddit)].commentCount += 1;
@@ -282,7 +167,7 @@ public class UserHistoryController : Controller {
                 frequencyList[subreddits.IndexOf(listing.data_subreddit)].permalink = listing.data_permalink;
             } else {
                 frequencyList[subreddits.IndexOf(listing.data_subreddit)].addListingToHistory(listing);
-                if (listing.data_type == "link") {
+                if (listing.data_type == "post") {
                     frequencyList[subreddits.IndexOf(listing.data_subreddit)].postCount += 1;
                 } else {
                     frequencyList[subreddits.IndexOf(listing.data_subreddit)].commentCount += 1;

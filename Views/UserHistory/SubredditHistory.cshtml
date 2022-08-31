@@ -2,7 +2,7 @@
 @{
     List<Listing> history = ViewBag.history;
 }
-<h2>Full History for user <b>@history[0].data_author</b> in subreddit <b>@ViewBag.header</b></h2>
+<h2>Full history for user <b>@history[0].data_author</b> in subreddit <b>@history[0].data_subreddit</b></h2>
 <table style="border: 1px solid; margin: 5px">
     <tr style="border: 1px solid;">
         <th style="border: 1px solid; padding: 5px">Date</th>
