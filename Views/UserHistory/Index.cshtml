@@ -21,6 +21,18 @@
     #downloadButton {
         padding: 5px;
     }
+    #showRawJSON, #jumpToJSONLink, #copyJSONButton {
+        margin: 5px;
+        padding: 5px
+    }
+    #jumpToJSON {
+        border: 2px solid black;
+        padding: 5px;
+    }
+    .pageTopLink {
+        margin: 5px;
+        padding: 5px;
+    }
     .flexContainer {
         display: flex;
         flex-wrap: wrap;
@@ -69,12 +81,12 @@
 <h3></h3>
 
 <div>
-    <form asp-controller="UserHistory" asp-action="Index" method="get">
+    <form asp-controller="UserHistory" asp-action="Index" method="post">
         <label for="username">Enter Username</label>
         <input type="text" id="username" name="username" placeholder="Username" />
         <input type="submit">
     </form>
-    <h2>User: <b>@ViewBag.username</b></h2>
+    <h2 id="pageTop">User: <b>@ViewBag.username</b></h2>
     <h3>Subreddits:</h3>
     <div class="flexContainer">
         @foreach(FrequencyItem item in sortedHistory) {
@@ -83,11 +95,7 @@
     </div>
     <div id="headerContainer">
         <h3>Most recent contributions by subreddit</h3>
-        <form asp-controller="UserHistory" asp-action="DownloadJSONforUser" method="get" id="downloadButton">
-            <input type="hidden" name="list" id="list" value="@userHistoryJSON" />
-            <input type="hidden" name="username" id="username" value="@ViewBag.username" />
-            <input type="submit" value="Download Full History JSON" />
-        </form>
+        <input type="submit" value="Show Raw JSON" id="showRawJSON"/><a href="#jumpToJSON" id="jumpToJSONLink"></a>
     </div>
     <table style="border: 1px solid; margin: 5px">
         <tr style="border: 1px solid;">
@@ -125,21 +133,20 @@
         }
     </table>
 </div>
+<input type="submit" value="Copy to Clipboard" id="copyJSONButton"/><a href="#pageTop" class="pageTopLink">Back to Top</a>
+<div id="jumpToJSON">
 
+</div>
+<a href="#pageTop" class="pageTopLink">Back to Top</a>
 <script>
-    
-    
     const getCellValue = (tr, idx) => tr.children[idx].innerText || tr.children[idx].textContent;
-    const getCellValueDateTIme = (tr, idx) => Date.parse(tr.children[idx].innerText) || Date.parse(tr.children[idx].textContent)
-
+    const getCellValueDateTIme = (tr, idx) => Date.parse(tr.children[idx].innerText) || Date.parse(tr.children[idx].textContent);
     const comparer = (idx, asc) => (a, b) => ((v1, v2) => 
         v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
         )(getCellValue(asc ? a : b, idx), getCellValue(asc ? b : a, idx));
     const comparerDateTime = (idx, asc) => (a, b) => ((v1, v2) => 
         v1 !== '' && v2 !== '' && !isNaN(v1) && !isNaN(v2) ? v1 - v2 : v1.toString().localeCompare(v2)
         )(getCellValueDateTIme(asc ? a : b, idx), getCellValueDateTIme(asc ? b : a, idx));
-
-    // do the work...
     document.querySelectorAll('.sortable').forEach(th => th.addEventListener('click', (() => {
         const table = th.closest('table');
         Array.from(table.querySelectorAll('tr:nth-child(n+2)'))
@@ -152,24 +159,15 @@
             .sort(comparerDateTime(Array.from(th.parentNode.children).indexOf(th), this.asc = !this.asc))
             .forEach(tr => table.appendChild(tr) );
     })));
-    /*
-    
-    */
-</script>
-<script>
-    function download(filename, textInput) {
-
-                  var element = document.createElement('a');
-                  element.setAttribute('href','data:application/json;charset=utf-8, ' + encodeURIComponent(textInput));
-                  element.setAttribute('download', filename);
-                  document.body.appendChild(element);
-                  element.click();
-                  //document.body.removeChild(element);
-            }
-            document.getElementById("downloadButton")
-                  .addEventListener("click", function () {
-                        var text = @userHistoryJSON;
-                        var filename = "output.txt";
-                        download(filename, text);
-                  }, false);
+    document.querySelector('#showRawJSON').addEventListener('click', (() => {
+        let string = "@userHistoryJSON";
+        string = string.replaceAll("&quot;", '"');
+        document.querySelector('#jumpToJSON').innerText = string;
+        document.querySelector('#jumpToJSON').border = "2px solid black";
+        document.querySelector('#jumpToJSONLink').innerText = "Jump to JSON";
+    }));
+    document.querySelector('#copyJSONButton').addEventListener('click', (() => {
+        let text = document.querySelector('#jumpToJSON').innerText;
+        navigator.clipboard.writeText(text);
+    }));
 </script>
